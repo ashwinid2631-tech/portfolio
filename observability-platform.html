@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Design Cohesive Observability Experience — Ashwini Dixit</title>
+<meta name="description" content="Creating a shared, AI-native observability framework across AI, GPU, Kubernetes and infrastructure products at DigitalOcean — 0→1 in three months.">
+<script>try{var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@800;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--text:#111218;--muted:#555a66;--faint:#9096a3;--line:#e4e6ec;--scrim:rgba(255,255,255,.62);--accent:#ee4000;--foot-bg:#eef3ff;--flower:#0070c0;--panel:#0070c0;--logo-ink:#000;--head:rgba(255,255,255,.78)}
+:root[data-theme=dark]{--bg:#0b0c12;--text:#f3f4f8;--muted:#a3a8b6;--faint:#757b8c;--line:#23262f;--scrim:rgba(8,10,18,.58);--foot-bg:#0e1220;--flower:#2f95e6;--panel:#0070c0;--logo-ink:#fff;--head:rgba(11,12,18,.78)}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);transition:background .4s,color .4s;-webkit-font-smoothing:antialiased;padding-top:env(safe-area-inset-top,0px)}
+a{color:inherit}
+/* header */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;justify-content:space-between;padding:12px clamp(16px,3vw,40px);background:var(--head);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.logo{width:48px;height:48px;display:block}
+.logo svg{width:100%;height:100%;overflow:visible}
+nav{display:flex;align-items:center;gap:clamp(18px,3vw,44px);font-size:14px}
+nav a{text-decoration:none;position:relative}
+nav a:not(.logo)::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .3s}
+nav a:hover::after{transform:scaleX(1)}
+.theme{position:relative;display:flex;gap:2px;padding:3px;border-radius:99px;background:var(--line)}
+.theme button{position:relative;z-index:1;width:32px;height:32px;border:0;background:none;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--muted);transition:color .3s}
+.theme button[aria-pressed=true]{color:#fff}
+.theme button svg{width:17px;height:17px}
+.theme i{position:absolute;top:3px;left:3px;width:32px;height:32px;border-radius:50%;background:var(--text);transition:transform .35s cubic-bezier(.5,1.6,.5,1)}
+:root[data-theme=light] .theme button[aria-pressed=true]{color:var(--bg)}
+:root[data-theme=dark] .theme button[aria-pressed=true]{color:var(--bg)}
+:root[data-theme=dark] .theme i{transform:translateX(34px)}
+/* hero */
+.hero{position:relative;min-height:min(74vh,720px);overflow:hidden;display:flex;align-items:center;padding:clamp(28px,5vw,64px) clamp(20px,4vw,56px)}
+.hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.hero::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,var(--scrim) 0%,var(--scrim) 40%,transparent 85%);transition:background .4s}
+.hero .in{position:relative;z-index:2;max-width:560px}
+.hero h1{font-weight:500;font-size:clamp(26px,3vw,36px);margin-bottom:18px}
+.hero h1 b{font-weight:600}
+.hero p{font-size:clamp(16px,1.5vw,19px);line-height:1.5;margin-bottom:clamp(44px,5vw,64px)}
+.links{list-style:none;padding:0;display:grid;gap:14px}
+.links a{display:flex;align-items:center;gap:14px;font-size:15px;text-underline-offset:3px}
+.ico{width:24px;height:24px;flex:none;display:block;transition:transform .3s cubic-bezier(.3,1.5,.5,1)}
+.ico svg,.ico img{width:100%;height:100%;display:block}
+.links a:hover .ico{transform:scale(1.15) rotate(-6deg)}
+.dd{position:relative}
+.ddb{display:flex;align-items:center;gap:6px;border:0;background:none;color:inherit;font:inherit;cursor:pointer;padding:6px 0}
+.ddb svg{transition:transform .3s}
+.dd.open .ddb svg{transform:rotate(180deg)}
+.ddm{position:absolute;top:100%;right:-12px;min-width:230px;margin-top:10px;padding:8px;list-style:none;background:var(--bg);border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.16);opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .22s,transform .22s,visibility .22s}
+.ddm::before{content:"";position:absolute;left:0;right:0;top:-14px;height:14px}
+.dd.open .ddm{opacity:1;visibility:visible;transform:none}
+@media(hover:hover){.dd:hover .ddm{opacity:1;visibility:visible;transform:none}.dd:hover .ddb svg{transform:rotate(180deg)}}
+.ddm a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:9px;text-decoration:none;font-size:14px;white-space:nowrap;transition:background .2s}
+.ddm a::after{display:none}
+.ddm a:hover,.ddm a:focus-visible{background:var(--line);outline:none}
+.ddm i{width:9px;height:9px;border-radius:50%;background:var(--flower);flex:none}
+.rise>*{opacity:0;transform:translateY(18px);animation:up .8s cubic-bezier(.2,.7,.2,1) forwards}
+.rise>*:nth-child(2){animation-delay:.12s}.rise>*:nth-child(3){animation-delay:.24s}.rise>*:nth-child(4){animation-delay:.36s}
+@keyframes up{to{opacity:1;transform:none}}
+/* cases */
+main{padding:0 clamp(0px,0vw,0px)}
+.cases{display:block;padding:0;position:relative}
+.case{position:relative;display:grid;place-items:center;text-align:center;min-height:clamp(440px,72vh,660px);padding:72px 24px;color:var(--ct);text-decoration:none;overflow:hidden;opacity:0;transform:translateY(28px);transition:opacity .9s,transform .9s cubic-bezier(.2,.7,.2,1);--chk:var(--bgc)}
+.case.in{opacity:1;transform:none}
+.case::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(70% 90% at 50% 115%,color-mix(in srgb,var(--vz) 22%,transparent),transparent 70%)}
+.viz{color:var(--vz)}
+/* Variation A: tinted surfaces that follow the theme */
+main[data-variant=a]{--ct:var(--text)}
+main[data-variant=a] .case{background:var(--bgc);border-top:1px solid var(--line)}
+main[data-variant=a] .case:first-child{border-top:0}
+main[data-variant=a] .c1{--bgc:#e8f4f3;--vz:#0e7c86}main[data-variant=a] .c2{--bgc:#e8f2fa;--vz:#1b8cc4}main[data-variant=a] .c3{--bgc:#fdf1e1;--vz:#e07b00}
+main[data-variant=a] .c4{--bgc:#f0ebfb;--vz:#6a43d6}main[data-variant=a] .c5{--bgc:#fbebf5;--vz:#d0399a}main[data-variant=a] .c6{--bgc:#e9edfc;--vz:#3a5bd9}
+:root[data-theme=dark] main[data-variant=a] .c1{--bgc:#08242a;--vz:#4fd1c5}:root[data-theme=dark] main[data-variant=a] .c2{--bgc:#0a1f2e;--vz:#4db8f0}:root[data-theme=dark] main[data-variant=a] .c3{--bgc:#21150a;--vz:#ffa733}
+:root[data-theme=dark] main[data-variant=a] .c4{--bgc:#17102f;--vz:#a58bff}:root[data-theme=dark] main[data-variant=a] .c5{--bgc:#26112a;--vz:#ff7cc8}:root[data-theme=dark] main[data-variant=a] .c6{--bgc:#101733;--vz:#7f9bff}
+/* Variation B: one continuous, muted gradient flowing through all six */
+main[data-variant=b]{--ct:#fff;background:linear-gradient(180deg,#0c4a54 0%,#135a78 20%,#1a6560 38%,#37507a 56%,#35297a 76%,#1a1442 100%)}
+main[data-variant=b] .case{background:none}
+main[data-variant=b] .c1{--vz:#a6f2e4}main[data-variant=b] .c2{--vz:#c2e9ff}main[data-variant=b] .c3{--vz:#ffd9a0}main[data-variant=b] .c4{--vz:#d8cdff}main[data-variant=b] .c5{--vz:#ffc6ee}main[data-variant=b] .c6{--vz:#cdd8ff;--bgc:#2d2178}
+.viz{position:absolute;top:-6%;left:50%;height:112%;width:auto;aspect-ratio:1000/560;overflow:visible;z-index:0;pointer-events:none;transform:translate(-50%,calc(var(--p,0)*36px))}
+.viz *{animation-play-state:paused}
+.talk{border-top:1px solid var(--line)}
+.case.in .viz *{animation-play-state:running}
+.txt{position:relative;z-index:1;max-width:760px}
+.eyebrow{font-size:14px;opacity:.9;margin-bottom:22px}
+.case h2{font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(34px,5.6vw,68px);line-height:1.05;letter-spacing:-.01em;margin-bottom:26px}
+.case h2 span{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.12em}
+.case h2 span i{display:inline-block;font-style:normal;transform:translateY(110%);transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+.case.in h2 span i{transform:none}
+.case p{font-size:clamp(15px,1.5vw,18px);line-height:1.35;max-width:520px;margin:0 auto 22px}
+.tags{font-size:13px;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.tags s{width:5px;height:5px;border-radius:50%;background:currentColor;text-decoration:none}
+.cta{display:inline-block;margin-top:22px;font-size:14px;opacity:0;transform:translateY(8px);transition:.4s}
+.case:hover .cta,.case:focus-visible .cta{opacity:1;transform:none}
+.case:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+@media(hover:none){.cta{opacity:.9;transform:none}}
+/* viz animations */
+@keyframes dash{to{stroke-dashoffset:-44}}
+@keyframes pulse{0%{r:6;opacity:.8}100%{r:70;opacity:0}}
+@keyframes bob{50%{transform:translateY(-16px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blip{0%,60%,100%{opacity:0;transform:scale(.4)}70%{opacity:1;transform:scale(1)}90%{opacity:.8}}
+@keyframes drift{from{transform:translateX(-1000px) rotate(var(--r))}to{transform:translateX(2000px) rotate(var(--r))}}
+@keyframes eq{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
+@keyframes grow{0%{stroke-dashoffset:300}60%,100%{stroke-dashoffset:0}}
+@keyframes f1{0%,10%{fill:transparent}16%,100%{fill:currentColor}}@keyframes p1{0%,10%{transform:scale(0)}18%,100%{transform:scale(1)}}
+@keyframes f2{0%,35%{fill:transparent}41%,100%{fill:currentColor}}@keyframes p2{0%,35%{transform:scale(0)}43%,100%{transform:scale(1)}}
+@keyframes f3{0%,60%{fill:transparent}66%,100%{fill:currentColor}}@keyframes p3{0%,60%{transform:scale(0)}68%,100%{transform:scale(1)}}
+.flow{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-dasharray:8 14;opacity:.5;animation:dash 2.4s linear infinite}
+.ring{fill:none;stroke:currentColor;stroke-width:2;animation:pulse 3.6s ease-out infinite}
+.layer{fill:currentColor;fill-opacity:.12;stroke:currentColor;stroke-opacity:.7;stroke-width:1.5;animation:bob 5s ease-in-out infinite}
+.sweep{transform-origin:500px 280px;animation:spin 6s linear infinite}
+.blip{fill:var(--vz);transform-box:fill-box;transform-origin:center;animation:blip 6s ease-in-out infinite}
+.tk{animation:drift 40s linear infinite;fill:currentColor;fill-opacity:.08;stroke:currentColor;stroke-opacity:.5;stroke-width:1.5}
+.bar{fill:currentColor;opacity:.55;transform-box:fill-box;transform-origin:bottom;animation:eq 1.8s ease-in-out infinite}
+.venn{fill:currentColor;fill-opacity:.2;animation:bob 6s ease-in-out infinite}
+.prog{fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-dasharray:300;animation:grow 6s ease-in-out infinite}
+.stepc{fill:transparent;stroke:currentColor;stroke-width:3;animation:6s infinite}
+.chk{fill:none;stroke:var(--chk);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;transform-box:fill-box;transform-origin:center;animation:6s infinite}
+/* footer */
+footer{background:var(--bg)}
+.talk{display:grid;grid-template-columns:auto 1fr auto auto;column-gap:14px;row-gap:14px;align-items:center;padding:clamp(24px,3vw,40px) clamp(20px,3vw,40px) 28px}
+.talk h3{grid-column:1;grid-row:1;font-weight:500;font-size:28px;margin-bottom:6px}
+.talk .links{display:contents}
+.talk .links li{grid-column:1;list-style:none}
+.talk .links li:nth-child(1){grid-row:2}.talk .links li:nth-child(2){grid-row:3}.talk .links li:nth-child(3){grid-row:4}
+.talk .ml,.talk .mv{font-size:14px;line-height:24px}
+.talk .ml{grid-column:3;justify-self:start;letter-spacing:.04em;color:var(--faint)}
+.talk .mv{grid-column:4}
+.talk .r2{grid-row:2}.talk .r3{grid-row:3}
+@media(max-width:640px){.talk{grid-template-columns:auto 1fr}.talk .links li{grid-column:1/-1}.talk .ml{grid-column:1;justify-self:start}.talk .mv{grid-column:2}.talk .ml.r2,.talk .mv.r2{grid-row:5}.talk .ml.r3,.talk .mv.r3{grid-row:6}.talk h3{grid-column:1/-1}}
+.garden{position:relative;background:var(--bg);padding:0;transition:background .4s}
+.flowers{display:flex;justify-content:space-evenly;align-items:flex-end;height:110px;padding:0 4%;margin-bottom:-1px;background:var(--bg)}
+.fl{width:clamp(36px,6vw,64px);height:100%;overflow:visible;transform-origin:50% 100%;transform:scaleY(0);transition:transform 1.3s cubic-bezier(.3,1.4,.4,1)}
+.garden.in .fl{transform:none}
+.sway{transform-origin:50% 100%;animation:sway var(--d,4s) ease-in-out infinite alternate;animation-delay:var(--dl,0s)}
+@keyframes sway{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
+.head{transform-origin:center;transform-box:fill-box;animation:spin 14s linear infinite}
+.fl *{stroke:var(--flower);fill:none;stroke-width:2.4;stroke-linecap:round}
+.fl .pet{fill:var(--bg)}
+.fl .core{fill:var(--flower)}
+.panel{height:clamp(150px,22vw,260px);border-radius:0;background:var(--panel);background-image:radial-gradient(rgba(255,255,255,.55) 1.2px,transparent 1.4px);background-size:18px 18px;background-position:0 bottom;-webkit-mask:linear-gradient(#000 40%,rgba(0,0,0,.7));transition:background-color .4s}
+@media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}.case,.rise>*{opacity:1!important;transform:none!important}.case h2 span i{transform:none!important}.fl{transform:none!important}}
+@media(max-width:640px){nav .nl{display:none}.hero::before{background:var(--scrim)}.meta{padding-top:0}}
+
+nav a[aria-current]::after{transform:scaleX(1)!important}
+.wrap{max-width:1180px;margin:0 auto;padding:0 clamp(20px,4vw,48px)}
+.rv{opacity:0;transform:translateY(28px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);transition-delay:calc(var(--i,0)*.12s)}
+.rv.in{opacity:1;transform:none}
+.ab-hero{padding:clamp(40px,7vw,96px) 0 clamp(56px,8vw,110px)}
+.ab-grid{display:grid;grid-template-columns:minmax(0,380px) 1fr;gap:clamp(32px,6vw,88px);align-items:center}
+.photo img{width:100%;height:auto;display:block;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.photo:hover img{transform:rotate(-1.5deg) scale(1.02)}
+.kicker{font-size:14px;color:var(--muted);letter-spacing:.02em}
+.ab h1,.ab h2{font-family:'Playfair Display',serif;font-weight:900;letter-spacing:-.01em;line-height:1.04}
+.ab h1{font-size:clamp(46px,7vw,92px);margin:10px 0 28px}
+.ab h2{font-size:clamp(30px,4vw,50px);margin:8px 0 20px}
+.lead{font-size:clamp(17px,1.5vw,19px);line-height:1.65;max-width:640px}
+.lead+.lead{margin-top:16px}
+.chips{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px;margin-top:28px;max-width:640px}
+.chips li{font-size:13px;padding:7px 13px;border:1px solid var(--line);border-radius:99px;transition:border-color .3s,color .3s,transform .3s}
+.chips li:hover{border-color:#0070c0;color:#0070c0;transform:translateY(-2px)}
+.btn{display:inline-flex;align-items:center;gap:12px;margin-top:34px;padding:16px 28px;border-radius:999px;background:#0070c0;color:#fff;text-decoration:none;font-weight:600;font-size:15px;position:relative;overflow:hidden;isolation:isolate;transition:transform .35s cubic-bezier(.3,1.5,.5,1),box-shadow .35s}
+.btn::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(100deg,#00589a,#1a95ec);transform:translateX(-101%);transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.btn:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(0,112,192,.4)}
+.btn:hover::before{transform:none}
+.btn:active{transform:translateY(0) scale(.97)}
+.btn:focus-visible{outline:3px solid #0070c0;outline-offset:4px}
+.btn svg{width:20px;height:20px;flex:none;overflow:hidden}
+.btn:hover .dl{animation:dl .8s cubic-bezier(.3,.9,.3,1) infinite}
+@keyframes dl{0%{transform:translateY(-9px);opacity:0}45%{opacity:1}100%{transform:translateY(0);opacity:1}}
+.band{padding:clamp(56px,8vw,112px) 0;border-top:1px solid var(--line)}
+.band .wrap{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,6vw,88px);align-items:center}
+.vis img{width:100%;height:auto;display:block;border-radius:22px;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.vis:hover img{transform:scale(1.015) rotate(.4deg)}
+.steps{list-style:none;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:18px 28px;margin-top:28px}
+.steps li{padding-top:14px;border-top:2px solid #0070c0}
+.steps b{display:block;font-size:16px;margin-bottom:4px}
+.steps span{font-size:14px;line-height:1.5;color:var(--muted)}
+.pts{list-style:none;padding:0;margin-top:26px;display:grid;gap:18px}
+.pts li{padding-left:20px;border-left:3px solid #0070c0;font-size:16px;line-height:1.5}
+.pts b{display:block;margin-bottom:2px}
+.pts span{color:var(--muted);font-size:14.5px}
+@media(max-width:820px){.ab-grid,.band .wrap{grid-template-columns:1fr}.photo{max-width:300px}.steps{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1!important;transform:none!important}}
+
+.tag{font-weight:600;font-size:clamp(13px,1.2vw,15px);letter-spacing:.07em;text-transform:uppercase;color:var(--flower);margin:0 0 18px}
+.tag.outside{margin-top:30px;margin-bottom:8px}
+.ab-hero{background:radial-gradient(60% 75% at 100% 0%,color-mix(in srgb,#0070c0 12%,transparent),transparent 68%),radial-gradient(45% 60% at 0% 100%,color-mix(in srgb,#ffb4a0 16%,transparent),transparent 72%)}
+.band.b1{background:color-mix(in srgb,#b0a8ff 11%,var(--bg))}
+.band.b2{background:color-mix(in srgb,#ffb4a0 12%,var(--bg))}
+
+.cs{--vz:#0070c0}:root[data-theme=dark] .cs{--vz:#3a9be0}
+.cs h1,.cs h2,.cs h3{font-family:'Playfair Display',serif;font-weight:900;letter-spacing:-.01em;line-height:1.05}
+.cs h2{font-size:clamp(30px,4vw,50px);margin:8px 0 22px}
+.cs-hero{position:relative;overflow:hidden;padding:clamp(36px,6vw,80px) 0 clamp(36px,5vw,64px);background:radial-gradient(60% 80% at 100% 0%,color-mix(in srgb,var(--vz) 16%,transparent),transparent 68%),radial-gradient(45% 60% at 0% 100%,color-mix(in srgb,#7fe6d6 14%,transparent),transparent 72%)}
+.cs-hero .viz{opacity:.55}.cs-hero .viz *{animation-play-state:running}
+.cs-hero .wrap{position:relative;z-index:1}
+.back{display:inline-flex;gap:8px;font-size:14px;color:var(--muted);text-decoration:none;margin-bottom:28px;transition:gap .3s,color .3s}.back:hover{gap:12px;color:var(--text)}
+.cs h1{font-size:clamp(42px,7vw,96px);margin:10px 0 24px;max-width:900px}
+.cs .lead{max-width:680px}
+.meta4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px 32px;margin:clamp(32px,5vw,56px) 0 0;padding-top:24px;border-top:1px solid var(--line)}
+.meta4 dt{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}.meta4 dd{margin:0;font-size:15px;line-height:1.45}
+.shot{margin:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--bg);box-shadow:0 24px 60px -24px rgba(0,30,40,.28);transition:transform .5s cubic-bezier(.2,.8,.2,1),box-shadow .5s;cursor:zoom-in}
+.shot:hover{transform:translateY(-4px);box-shadow:0 34px 70px -24px rgba(0,30,40,.36)}
+.shot .bar{display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--text) 4%,var(--bg))}.shot .bar i{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.shot img,.shot .ph{display:block;width:100%;height:auto;aspect-ratio:16/10;object-fit:cover;object-position:top}
+.shot figcaption{padding:12px 16px;font-size:13px;color:var(--muted);border-top:1px solid var(--line)}
+.ph{background:linear-gradient(135deg,color-mix(in srgb,var(--vz) 12%,var(--bg)),color-mix(in srgb,#0070c0 10%,var(--bg)));display:grid;place-items:center;color:var(--muted);font-size:13px}
+.sec{padding:clamp(56px,8vw,112px) 0;border-top:1px solid var(--line)}
+.sec.tint{background:color-mix(in srgb,var(--vz) 7%,var(--bg))}
+.two{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(32px,6vw,88px);align-items:start}
+.cs p{line-height:1.65}.cs .two p+p{margin-top:16px}
+.note{padding:24px 26px;border-radius:18px;background:var(--bg);border:1px solid var(--line)}.note h3{font-size:20px;margin-bottom:10px}.note p{font-size:15px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(16px,3vw,32px);margin-top:36px}
+.stat{padding:28px 26px;border-radius:20px;background:var(--bg);border:1px solid var(--line);transition:transform .4s,border-color .4s}.stat:hover{transform:translateY(-5px);border-color:var(--vz)}
+.stat .n{font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(48px,6vw,84px);line-height:1;color:var(--vz)}
+.stat b{display:block;margin:14px 0 6px;font-size:17px}.stat>span{font-size:14.5px;line-height:1.55;color:var(--muted)}
+.quote{margin-top:28px;font-size:15px;color:var(--muted);max-width:720px}
+.gal{display:grid;grid-template-columns:1fr 1fr;gap:clamp(18px,2.5vw,32px);margin-top:36px}.gal .full{grid-column:1/-1}
+.dec{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(16px,3vw,32px);margin-top:36px}
+.dec>div{padding-top:16px;border-top:2px solid var(--vz)}.dec em{font-style:normal;font-size:13px;color:var(--vz);font-weight:600;letter-spacing:.06em}.dec h3{font-size:22px;margin:8px 0 10px}.dec p{font-size:14.5px;color:var(--muted)}
+.path{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:16px;font-size:12.5px}
+.path span{padding:6px 10px;border-radius:99px;border:1px solid var(--line);animation:lit 6s infinite;animation-delay:calc(var(--k)*1.2s)}
+.path s{text-decoration:none;color:var(--faint)}
+@keyframes lit{0%,28%,100%{background:none;color:inherit;border-color:var(--line)}6%,22%{background:var(--vz);color:var(--bg);border-color:var(--vz)}}
+.cons{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,3vw,32px);margin-top:48px}
+.next{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;padding:clamp(40px,6vw,72px) 0;border-top:1px solid var(--line)}
+.next a{font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(28px,4vw,52px);text-decoration:none;transition:color .3s,letter-spacing .4s}.next a:hover{color:var(--vz);letter-spacing:.01em}
+
+@media(max-width:820px){.meta4{grid-template-columns:1fr 1fr}.two,.cons,.gal,.dec,.stats{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.path span{animation:none}}
+
+.cs{--label:#004C56;--sans:'Plus Jakarta Sans',Inter,system-ui,sans-serif}
+:root[data-theme=dark] .cs{--label:#7fd6cf}
+.cs h1,.cs h2,.cs h3{font-variant-ligatures:none;font-feature-settings:"liga" 0,"clig" 0}
+.cs h1{letter-spacing:0}
+.cs h2,.cs h3,.next a,.stat .n{font-family:var(--sans)}
+.cs h2{font-weight:800;letter-spacing:-.02em;font-size:clamp(28px,3.6vw,44px);line-height:1.12}
+.cs h3{font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.next a{font-weight:800;letter-spacing:-.02em;font-size:clamp(26px,3.4vw,42px)}.next a:hover{letter-spacing:-.01em}
+.cs .kicker,.meta4 dt,.dec em{text-transform:uppercase;letter-spacing:.09em;font-size:12.5px;font-weight:600;color:var(--label)}
+.back{position:relative}
+.back::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.back:hover::after{transform:scaleX(1)}
+.stat{display:flex;flex-direction:column}
+.stat .n{display:flex;align-items:baseline;gap:10px;font-weight:800;line-height:1;letter-spacing:-.03em}
+.stat .n small{font-size:.3em;font-weight:700;letter-spacing:0;color:var(--label)}
+.stat b{margin-top:22px}
+.path span{animation:none!important;border:1.5px solid var(--label);background:none;color:var(--text);padding:6px 12px;font-weight:500}
+.path s{color:var(--label)}
+.dec{grid-template-columns:1fr;gap:0}
+.dec>div{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);column-gap:clamp(32px,6vw,88px);row-gap:6px;align-content:start;padding:30px 0;border-top:1px solid var(--line)}
+.dec>div:last-child{border-bottom:1px solid var(--line)}
+.dec em{grid-column:1;grid-row:1}.dec h3{grid-column:1;grid-row:2;margin:0}.dec p{grid-column:2;grid-row:1/3;font-size:16px}.dec .path{grid-column:2;grid-row:3;margin-top:14px}
+@media(max-width:820px){.dec>div{grid-template-columns:1fr}.dec em,.dec h3,.dec p,.dec .path{grid-column:1;grid-row:auto}}
+.endband{position:relative;overflow:hidden;color:#fff;background:linear-gradient(90deg,#0070c0,#0a4f8a)}
+.endband svg{position:absolute;top:50%;right:-6%;width:min(46vw,440px);height:auto;transform:translateY(-50%);color:#fff;opacity:.5;pointer-events:none}
+.endband .ring{stroke:#fff}
+.nextcard{position:relative;z-index:1;display:grid;gap:8px;max-width:1180px;margin:0 auto;padding:clamp(36px,5vw,60px) clamp(20px,4vw,48px);color:#fff;text-decoration:none}
+.nx-k{font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;opacity:.9}
+.nx-t{font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(26px,3.4vw,42px);line-height:1.1;max-width:720px;font-variant-ligatures:none}
+.nx-d{max-width:480px;font-size:clamp(14px,1.2vw,16px);line-height:1.45;opacity:.92}
+.nx-a{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:50%;border:1.5px solid #fff;font-size:20px;margin-top:6px;transition:transform .4s cubic-bezier(.3,1.5,.5,1),background .3s,color .3s}
+.nextcard:hover .nx-a{transform:translateX(10px);background:#fff;color:#07181a}
+.nextcard:focus-visible{outline:3px solid #fff;outline-offset:-8px}
+.endband.tz{background:linear-gradient(90deg,#0a5ea8,#2b8fd8)}
+.endband.tz .nx-a{color:#fff}.nextcard:hover .nx-a{color:#0a4f6e!important}
+.note .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:color-mix(in srgb,var(--vz) 13%,transparent);color:var(--vz);margin-bottom:14px}.cs-hero{--chk:var(--bg);background:radial-gradient(60% 80% at 100% 0%,color-mix(in srgb,var(--vz) 16%,transparent),transparent 68%),radial-gradient(45% 60% at 0% 100%,color-mix(in srgb,#0070c0 10%,transparent),transparent 72%)}
+
+.shot{position:relative}
+.shot img{aspect-ratio:auto;height:auto;object-fit:contain;max-height:min(85vh,980px);background:color-mix(in srgb,var(--text) 3%,var(--bg))}
+.phone img,.strip img{max-height:none;background:none}
+.shot:has(img)::after{content:"Click to enlarge";position:absolute;top:10px;right:12px;z-index:3;font:600 11.5px Inter,sans-serif;letter-spacing:.04em;padding:5px 10px;border-radius:99px;background:var(--text);color:var(--bg);opacity:0;transform:translateY(-4px);transition:opacity .25s,transform .25s;pointer-events:none}
+.shot:has(img):hover::after{opacity:1;transform:none}
+.lb{position:fixed;inset:0;z-index:60;display:none;background:rgba(5,10,14,.9);padding:24px;overflow:auto;cursor:zoom-out}
+.lb.on{display:grid}
+.lb img{margin:auto;width:auto;height:auto;max-width:100%;max-height:calc(100vh - 48px);border-radius:10px;cursor:zoom-in}
+.lb.full img{max-width:none;max-height:none;cursor:zoom-out}
+
+.ddm{min-width:290px}.ddm a{gap:14px;padding:8px 12px}
+.ddm .lg{flex:none;width:76px;height:34px;display:grid;place-items:center;padding:6px 9px;border-radius:9px;background:#fff;border:1px solid var(--line)}
+.ddm .lg img{max-width:100%;max-height:100%;width:auto;height:auto;display:block}
+.ddm a span:last-child{font-weight:500}
+
+.cols3 dt,.meta4 dt{font-size:14px;font-weight:700;letter-spacing:.08em;margin-bottom:10px}
+.cs .kicker,.moment em,.dec em,.row .h,.ptag{font-size:13.5px;font-weight:700}
+.qual{margin-top:clamp(16px,3vw,32px);padding:26px 28px;border-radius:20px;border:1px solid var(--line);background:var(--bg);display:grid;gap:6px;max-width:none}
+.qual i{font-style:normal;font-size:13.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--label)}
+.qual b{font-family:var(--sans);font-size:clamp(20px,2.2vw,26px);line-height:1.2}
+.qual span{font-size:15.5px;line-height:1.55;color:var(--muted);max-width:760px}
+
+.ddm .dot{display:none;width:10px;height:10px;border-radius:50%;background:var(--b);flex:none;margin:0 8px 0 4px}
+.ddm.dots .lg{display:none}.ddm.dots .dot{display:block}.ddm.dots{min-width:240px}
+.ddm .lg{width:72px;height:36px;padding:7px 10px}
+.ddm .lg img{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain}
+.ddm .lg{display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ddm .lg img{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain}
+.ai3{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(16px,3vw,32px);margin-top:36px}
+.ai3 .note{display:flex;flex-direction:column}.ai3 .note p{font-size:15px;line-height:1.6}
+.al{font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--label);margin-bottom:8px}
+.cons{grid-template-columns:1fr}.cons .note{max-width:760px}
+@media(max-width:900px){.ai3{grid-template-columns:1fr}}
+.co{display:inline-flex;align-items:center;gap:12px;margin:6px 0 2px;font-family:var(--sans);font-weight:800;font-size:clamp(19px,2vw,24px);letter-spacing:-.01em}
+.colg{width:44px;height:44px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;padding:9px}.colg img{width:100%;height:100%;object-fit:contain}
+.cs h1{font-size:clamp(38px,5.8vw,82px)}
+.flowers{position:relative;z-index:1;height:120px}
+.waves{position:relative;z-index:2;height:34px;margin-top:-24px;margin-bottom:-1px;overflow:hidden}
+.waves svg{position:absolute;left:0;top:0;width:200%;height:100%;display:block}
+.waves path{fill:var(--panel)}
+.waves .wa1{opacity:.4;animation:wv 22s linear infinite reverse}
+.waves .wa2{animation:wv 14s linear infinite}
+@keyframes wv{to{transform:translateX(-50%)}}
+@keyframes sway{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}
+@media(prefers-reduced-motion:reduce){.waves svg{animation:none!important}}
+.colg{min-width:44px;width:auto;height:44px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;padding:9px 11px}
+.colg img{height:100%;width:auto;max-width:96px;object-fit:contain;display:block}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="index.html" aria-label="Ashwini Dongre — home"><svg viewBox="200 200 630 630" role="img" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M392 268V269L391 270V272L390 273V274L389 275V277L388 278V279L387 280V282L386 283V284L385 285V287L384 288V289L383 290V292L382 293V294L381 295V297L380 298V299L379 300V302L378 303V305L377 306V307L376 308V310L375 311V312L374 313V315L373 316V317L372 318V320L371 321V322L370 323V325L369 326V328L368 329V330L367 331V333L366 334V335L365 336V338L364 339V340L363 341V343L362 344V346L361 347V348L360 349V351L359 352V353L358 354V356L357 357V358L356 359V361L355 362V364L354 365V366L353 367V369L352 370V371L351 372V374L350 375V376L349 377V379L348 380V382L347 383V384L346 385V386L345 387V389L344 390V392L343 393V394L342 395V396L341 397V399L340 400V401L339 402V404L338 405V406L337 407V409L336 410V411L335 412V414L334 415V417L333 418V419L332 420V422L331 423V424L330 425V427L329 428V429L328 430V432L327 433V435L326 436V437L325 438V440L324 441V442L323 443V445L322 446V447L321 448V450L320 451V453L319 454V455L318 456V457L317 458V460L316 461V462L315 463V465L314 466V468L313 469V470L312 471V473L311 474V475L310 476V478L309 479V480L308 481V483L307 484V485L306 486V488L305 489V490L304 491V493L303 494V496L302 497V498L301 499V501L300 502V503L299 504V506L298 507V508L297 509V511L296 512V514L295 515V516L294 517V519L293 520V521L292 522V524L291 525V526L290 527V529L289 530V531L288 532V534L287 535V537L286 538V539L285 540V542L284 543V544L283 545V547L282 548V549L281 550V552L280 553V555L279 556V557L278 558V559L277 560V562L276 563V564L275 565V567L274 568V569L273 570V572L272 573V574L271 575V577L270 578V579L269 580V582L268 583V584L267 585V586L266 587V589L265 590V591L264 592V593L263 594V596L262 597V599L261 600V601L260 602V603L259 604V606L258 607V609L257 610V611L256 612V614L255 615V616L254 617V618L253 619V621L252 622V624L251 625V626L250 627V629L249 630V631L248 632V633L247 634V636L246 637V639L245 640V641L244 642V644L243 645V646L242 647V649L241 650V651L240 652V654L239 655V656L238 657V659L237 660V661L236 662V664L235 665V667L234 668V669L233 670V672L232 673V674L231 675V677L230 678V679L229 680V682L228 683V685L227 686V687L226 688V690L225 691V692L224 693V695L223 696V697L222 698V700L221 701V703L220 704V705L219 706V708L218 709V710L217 711V713L216 714V716L215 717V718L214 719V721L213 722V723L212 724V726L211 727V728L210 729V731L209 732V733L208 734V735L207 736L208 737L209 736H292V734L293 733V732L294 731V729L295 728V726L296 725V724L297 723V722L298 721V719L299 718V716L300 715V714L301 713V711L302 710V709L303 708V706L304 705V704L305 703V701L306 700V699L307 698V696L308 695V694L309 693V691L310 690V689L311 688V686L312 685V683L313 682V681L314 680V678L315 677V676L316 675V673L317 672V671L318 670V668L319 667V665L320 664V663L321 662V660L322 659V657L323 656V655L324 654V652L325 651V649L326 648V646L327 645V644L328 643V641L329 640V638L330 637V636L331 635V633L332 632V631L333 630V628L334 627V625L335 624V623L336 622V621L337 620V618L338 617V616L339 615V613L340 612V611L341 610V608L342 607V605L343 604V603L344 602V600L345 599V598L346 597V595L347 594H525L527 596V598L528 599V600L529 601V603L530 604V605L531 606V608L532 609V611L533 612V613L534 614V616L535 617V618L536 619V621L537 622V624L538 625V626L539 627V628L540 629V631L541 632V634L542 635V636L543 637V639L544 640V642L545 643V644L546 645V646L547 647V649L548 650V651H579L580 650H589L590 649H596L597 648H601L602 647H605L606 646H609L610 645H613L614 644H616L617 643H619L620 642H622L623 641H625L626 640H627L628 639H629V638L628 637V635L627 634V633L626 632V630L625 629V628L624 627V625L623 624V623L622 622V621L621 620V618L620 617V615L619 614V613L618 612V610L617 609V608L616 607V606L615 605V603L614 602V600L613 599V598L612 597V595L611 594V593L610 592V591L609 590V588L608 587V586L607 585V583L606 582V581L605 580V578L604 577V576L603 575V573L602 572V570L601 569V568L600 567V566L599 565V563L598 562V561L597 560V558L596 557V555L595 554V553L594 552V550L593 549V548L592 547V545L591 544V543L590 542V540L589 539V538L588 537V536L587 535V533L586 532V530L585 529V528L584 527V525L583 524V523L582 522V521L581 520V518L580 517V516L579 515V513L578 512V511L577 510V508L576 507V506L575 505V503L574 502V501L573 500V498L572 497V496L571 495V493L570 492V491L569 490V488L568 487V486L567 485V483L566 482V481L565 480V478L564 477V476L563 475V473L562 472V470L561 469V468L560 467V465L559 464V463L558 462V461L557 460V458L556 457V455L555 454V453L554 452V450L553 449V448L552 447V446L551 445V443L550 442V440L549 439V438L548 437V435L547 434V433L546 432V430L545 429V428L544 427V425L543 424V423L542 422V420L541 419V418L540 417V415L539 414V413L538 412V410L537 409V408L536 407V405L535 404V403L534 402V401L533 400V398L532 397V395L531 394V393L530 392V390L529 389V388L528 387V386L527 385V383L526 382V380L525 379V378L524 377V375L523 374V373L522 372V370L521 369V368L520 367V365L519 364V363L518 362V361L517 360V358L516 357V355L515 354V353L514 352V350L513 349V348L512 347V346L511 345V343L510 342V341L509 340V338L508 337V336L507 335V333L506 332V331L505 330V328L504 327V326L503 325V324L502 323V321L501 320V319L500 318V316L499 315V314L498 313V311L497 310V309L496 308V306L495 305V304L494 303V302L493 301V299L492 298V296L491 295V294L490 293V291L489 290V289L488 288V286L487 285V284L486 283V281L485 280V278L484 277V276L483 275V274L482 273V271L481 270V269L480 268" fill="#0070C0"/>
+<path d="M504 267V268L505 269V270L506 271V273L507 274V275L508 276V277L509 278V280L510 281V282L511 283V284L512 285V287L513 288V289L514 290V292L515 293V294L516 295V297L517 298V299L518 300V301L519 302V304L520 305V307L521 308V309L522 310V311L523 312V314L524 315V316L525 317V319L526 320V321L527 322V324L528 325V326L529 327V328L530 329V331L531 332V334L532 335V336L533 337V338L534 339V341L535 342H592L593 343H603L604 344H610L611 345H616L617 346H621L622 347H625L626 348H629L630 349H633L634 350H636L637 351H639L640 352H642L643 353H645L646 354H648L649 355H650L651 356H652L653 357H654L655 358H657L658 359H659L660 360H661L663 362H664L665 363H666L667 364H668L670 366H671L672 367H673L676 370H677L679 372H680L683 375H684L687 378H688L693 383H694L703 392V393L708 398V399L711 402V403L713 405V406L715 408V409L717 411V412L718 413V414L719 415V416L721 418V419L722 420V422L723 423V424L724 425V426L725 427V428L726 429V431L727 432V433L728 434V436L729 437V439L730 440V442L731 443V445L732 446V449L733 450V453L734 454V457L735 458V463L736 464V468L737 469V476L738 477V486L739 487V514L738 515V524L737 525V531L736 532V536L735 537V540L734 541V545L733 546V548L732 549V552L731 553V555L730 556V557L729 558V561L728 562V563L727 564V566L726 567V568L725 569V570L724 571V572L723 573V575L722 576V577L721 578V579L719 581V582L718 583V584L717 585V586L715 588V589L714 590V591L712 593V594L710 596V597L707 600V601L703 605V606L696 613V614L690 620H689L682 627H681L677 631H676L673 634H672L669 637H668L666 639H665L663 641H662L660 643H659L658 644H657L656 645H655L653 647H652L651 648H650L649 649H648L647 650H646L645 651H644L643 652H642L641 653H639L638 654H637L636 655H635L634 656H632L631 657H630L629 658H627L626 659H624L623 660H622L621 661H619L618 662H616L615 663H612L611 664H608L607 665H604L603 666H600L599 667H595L594 668H591L590 669H584L583 670H573L572 671H533L532 672V673L531 674V676L530 677V679L529 680V681L528 682V684L527 685V687L526 688V689L525 690V692L524 693V695L523 696V697L522 698V700L521 701V702L520 703V705L519 706V708L518 709V710L517 711V713L516 714V715L515 716V718L514 719V721L513 722V723L512 724V726L511 727V729L510 730V731L509 732V734L508 735V736H585L586 735H599L600 734H608L609 733H617L618 732H623L624 731H629L630 730H634L635 729H638L639 728H643L644 727H647L648 726H650L651 725H654L655 724H657L658 723H660L661 722H664L665 721H666L667 720H669L670 719H672L673 718H675L676 717H678L679 716H680L681 715H682L683 714H685L686 713H687L688 712H689L690 711H692L693 710H694L695 709H696L697 708H698L699 707H700L702 705H703L704 704H705L706 703H707L709 701H710L711 700H712L714 698H715L717 696H718L721 693H722L724 691H725L728 688H729L732 685H733L737 681H738L744 675H745L765 655V654L770 649V648L774 644V643L777 640V639L779 637V636L782 633V632L784 630V629L786 627V626L788 624V623L789 622V621L790 620V619L792 617V616L793 615V614L794 613V612L795 611V610L796 609V608L797 607V606L798 605V604L799 603V602L800 601V599L801 598V597L802 596V594L803 593V592L804 591V589L805 588V586L806 585V583L807 582V580L808 579V576L809 575V573L810 572V569L811 568V565L812 564V561L813 560V556L814 555V551L815 550V546L816 545V539L817 538V531L818 530V521L819 520V477L818 476V466L817 465V457L816 456V451L815 450V446L814 445V441L813 440V437L812 436V433L811 432V429L810 428V426L809 425V422L808 421V419L807 418V416L806 415V413L805 412V410L804 409V407L803 406V404L802 403V402L801 401V399L800 398V397L799 396V394L798 393V392L797 391V390L796 389V388L795 387V386L794 385V384L793 383V382L792 381V380L790 378V377L789 376V375L788 374V373L786 371V370L784 368V367L782 365V364L780 362V361L777 358V357L774 354V353L772 351V350L766 344V343L745 322H744L739 317H738L735 314H734L731 311H730L728 309H727L725 307H724L722 305H721L719 303H718L717 302H716L714 300H713L712 299H711L709 297H708L707 296H706L705 295H704L703 294H702L701 293H700L699 292H698L697 291H696L695 290H694L693 289H691L690 288H689L688 287H687L686 286H684L683 285H682L681 284H679L678 283H676L675 282H673L672 281H671L670 280H667L666 279H664L663 278H661L660 277H658L657 276H654L653 275H650L649 274H645L644 273H641L640 272H636L635 271H630L629 270H623L622 269H615L614 268H603L602 267" fill="var(--logo-ink)"/>
+<path d="M435.5 362L494.823 516.5H376.177L435.5 362Z" fill="var(--bg)"/>
+</svg>
+</a>
+  <nav>
+    <div class="dd"><button class="ddb" type="button" aria-haspopup="true" aria-expanded="false">Selected Work<svg viewBox="0 0 12 12" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5"/></svg></button>
+      <ul class="ddm">
+        <li><a href="observability-platform.html"><i class="dot" style="--b:#0080FF"></i><span class="lg"><img src="assets/logos/digitalocean.svg" alt="DigitalOcean" loading="lazy"></span><span>Observability</span></a></li>
+        <li><a href="tanzu-platform.html"><i class="dot" style="--b:#78BE20"></i><span class="lg"><img src="assets/logos/vmware.svg" alt="VMware by Broadcom" loading="lazy"></span><span>Tanzu Platform</span></a></li>
+        <li><a href="fraud-investigation.html"><i class="dot" style="--b:#FF9900"></i><span class="lg"><img src="assets/logos/aws.svg" alt="Amazon Web Services" loading="lazy"></span><span>Fraud Investigation</span></a></li>
+        <li><a href="point-of-sale.html"><i class="dot" style="--b:#5E29BA"></i><span class="lg"><img src="assets/logos/stubhub.svg" alt="StubHub" loading="lazy"></span><span>Point of Sale</span></a></li>
+        <li><a href="partnerships.html"><i class="dot" style="--b:#5E29BA"></i><span class="lg"><img src="assets/logos/stubhub.svg" alt="StubHub" loading="lazy"></span><span>Event Partnerships</span></a></li>
+        <li><a href="checkout-redesign.html"><i class="dot" style="--b:#5E29BA"></i><span class="lg"><img src="assets/logos/stubhub.svg" alt="StubHub" loading="lazy"></span><span>Checkout</span></a></li>
+      </ul></div>
+    <a class="nl" href="about.html">About</a>
+    <div class="theme" role="group" aria-label="Color theme">
+      <i></i>
+      <button data-t="light" aria-label="Light theme" title="Light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button data-t="dark" aria-label="Dark theme" title="Dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    </div>
+  </nav>
+</header>
+<main class="cs">
+<section class="cs-hero"><svg class="viz" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path class="flow" d="M-1500 120H0C200 120 260 280 500 280S800 440 1000 440H2500"/><path class="flow" style="animation-delay:-.6s" d="M-1500 280H2500"/><path class="flow" style="animation-delay:-1.2s" d="M-1500 440H0C200 440 260 280 500 280S800 120 1000 120H2500"/><circle class="ring" cx="500" cy="280" r="6"/><circle class="ring" style="animation-delay:-1.2s" cx="500" cy="280" r="6"/><circle class="ring" style="animation-delay:-2.4s" cx="500" cy="280" r="6"/></svg><div class="wrap">
+  <a class="back rv" href="index.html#work">← Selected Work</a>
+  <div class="kicker rv">Selected Work #1</div><div class="co rv" style="--i:1">DigitalOcean</div>
+  <h1 class="rv" style="--i:1">Design Cohesive Observability Experience</h1>
+  <p class="lead rv" style="--i:2">Creating a shared, AI-native observability framework across AI, GPU, Kubernetes and infrastructure products — from 0→1 in three months.</p>
+  <dl class="meta4 rv" style="--i:3"><div><dt>Role</dt><dd>Lead / sole Product Designer</dd></div><div><dt>Scope</dt><dd>AI Inference, GPU, Kubernetes &amp; infrastructure monitoring</dd></div><div><dt>Partners</dt><dd>PMs, engineering leads, engineers &amp; design partners</dd></div><div><dt>Launch</dt><dd>Public Preview in 3 months</dd></div></dl>
+</div></section>
+<section class="wrap" style="padding-bottom:clamp(56px,8vw,112px)"><figure class="shot  rv"><div class="bar"><i></i><i></i><i></i></div><img src="assets/screens/observability/4a-observability.png" alt="Observability dashboard: health at a glance across products" loading="lazy"><figcaption>Observability dashboard: health at a glance across products</figcaption></figure></section>
+
+<section class="sec"><div class="wrap two">
+  <div><div class="kicker rv">Context</div><h2 class="rv" style="--i:1">Multiple products. Different needs. One platform.</h2>
+    <p class="rv" style="--i:2">DigitalOcean was serving increasingly complex infrastructure products, including AI Inference, GPU compute and Kubernetes. Each needed observability, but teams were approaching it independently, with <b>no shared definition of what observability meant</b> across the company.</p>
+    <p class="rv" style="--i:3">The challenge wasn’t designing dashboards. It was building a system flexible enough for very different technical products, while making observability feel like one cohesive DigitalOcean experience.</p></div>
+  <div style="display:grid;gap:18px">
+    <div class="note rv" style="--i:2"><h3>My role</h3><p>I owned the end-to-end design direction, from the shared experience architecture to individual workflows and reusable patterns, and built alignment on what to standardize versus keep product-specific. AI-assisted prototyping was part of that process from the start.</p></div>
+    <div class="note rv" style="--i:3"><h3>Who we designed for</h3><p>Lead devs &amp; DevOps leads, CTOs, and GPU / Kubernetes power users. With a tight timeline, I ran 12 one-on-one interviews with internal users.</p></div></div>
+</div></section>
+
+<section class="sec tint"><div class="wrap">
+  <div class="kicker rv">Impact</div><h2 class="rv" style="--i:1">A cohesive platform that holds together</h2>
+  <div class="stats">
+    <div class="stat rv" style="--i:1"><div class="n"><span data-n="3">3</span><small>months</small></div><b>0→1, shipped on schedule</b><span>From fragmented requirements to a Public Preview launched in time for the conference, spanning multiple products and engineering teams.</span></div>
+    <div class="stat rv" style="--i:2"><div class="n"><span data-n="4">4</span>→1</div><b>Four definitions, one model</b><span>A shared framework gave PM and engineering teams common language while still supporting each product’s specialized needs.</span></div>
+    <div class="stat rv" style="--i:3"><div class="n"><span data-n="1">1</span><small>system</small></div><b>Reusable by design</b><span>Shared patterns and a resource hierarchy that new products can adopt, instead of a set of isolated dashboards.</span></div>
+  </div>
+  <p class="quote rv">Early user feedback was positive and helped validate the direction, and the need for a more cohesive approach to observability.</p>
+</div></section>
+
+<section class="sec"><div class="wrap">
+  <div class="kicker rv">AI</div><h2 class="rv" style="--i:1">AI in the product, and in the process</h2>
+  <p class="lead rv" style="--i:2">AI shaped this project three ways: as something we had to observe, as a core part of how I designed and prototyped, and as where observability is heading next.</p>
+  <div class="ai3">
+    <div class="note rv" style="--i:1"><div class="ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div><span class="al">In the product</span><h3>Observability for AI itself</h3><p>The platform covers the inference engine behind our AI products, not only the machines under it. Teams can see how inference is performing and what it costs, next to the GPU and Kubernetes layers it runs on.</p></div>
+    <div class="note rv" style="--i:2"><div class="ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M19 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></svg></div><span class="al">In the process</span><h3>AI as part of how I design</h3><p>I used Figma Make, Lovable and Cursor to explore quickly and build code-based prototypes, so engineering had something concrete to react to early. Information architecture, telemetry strategy and tradeoffs stayed a human call.</p></div>
+    <div class="note rv" style="--i:3"><div class="ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="11" rx="3"/><path d="M12 8V4.5"/><circle cx="12" cy="3.5" r="1"/><circle cx="9" cy="13.5" r="1"/><circle cx="15" cy="13.5" r="1"/><path d="M9.5 17h5"/></svg></div><span class="al">What’s next</span><h3>Early design for agents</h3><p>I started design work on agents that manage observability insights for Kubernetes: a first step from dashboards you read toward a system that helps you act on what it finds.</p></div>
+  </div>
+</div></section>
+
+<section class="sec tint"><div class="wrap">
+  <div class="kicker rv">Design</div><h2 class="rv" style="--i:1">The platform in action</h2>
+  <div class="gal">
+    <figure class="shot full rv"><div class="bar"><i></i><i></i><i></i></div><img src="assets/screens/observability/analyze.png" alt="AI Inference: performance and cost evaluated together" loading="lazy"><figcaption>AI Inference: performance and cost evaluated together</figcaption></figure>
+    <figure class="shot  rv"><div class="bar"><i></i><i></i><i></i></div><img src="assets/screens/observability/1d-si-insights.png" alt="Serverless Inference insights" loading="lazy"><figcaption>Serverless Inference insights</figcaption></figure>
+    <figure class="shot  rv"><div class="bar"><i></i><i></i><i></i></div><img src="assets/screens/observability/1b-di-insights.png" alt="Dedicated Inference insights" loading="lazy"><figcaption>Dedicated Inference insights</figcaption></figure>
+    <figure class="shot  rv"><div class="bar"><i></i><i></i><i></i></div><img src="assets/screens/observability/2a-gpu-drop.png" alt="GPU observability: from fleet health to a specific resource" loading="lazy"><figcaption>GPU observability: from fleet health to a specific resource</figcaption></figure>
+    <figure class="shot  rv"><div class="bar"><i></i><i></i><i></i></div><img src="assets/screens/observability/2b-gpu-drop-logs.png" alt="GPU observability: logs for diagnosis" loading="lazy"><figcaption>GPU observability: logs for diagnosis</figcaption></figure>
+  </div>
+</div></section>
+
+<section class="sec"><div class="wrap">
+  <div class="kicker rv">Approach</div><h2 class="rv" style="--i:1">How it came together</h2>
+  <div class="dec">
+    <div class="rv" style="--i:1"><em>01</em><h3>Standardize the path, not the metrics</h3><p>Every product shared one intent: understand health, investigate, decide what’s next. The signals differed, so I standardized the journey and let each product bring its own telemetry.</p><div class="path"><span style="--k:0">Health overview</span><s>→</s><span style="--k:1">Fleet metrics</span><s>→</s><span style="--k:2">Resource details</span></div></div>
+    <div class="rv" style="--i:2"><em>02</em><h3>Turn telemetry into decisions</h3><p>Exposing more data doesn’t make a product more useful. Where possible, the UI connects a signal to what it means and what to do about it.</p><div class="path"><span style="--k:0">Signal</span><s>→</s><span style="--k:1">Health</span><s>→</s><span style="--k:2">Context</span><s>→</s><span style="--k:3">Action</span></div></div>
+    <div class="rv" style="--i:3"><em>03</em><h3>Simple by default, deep on demand</h3><p>Basic observability covers common monitoring workflows. Advanced telemetry and diagnostics are there for the users who need them, without crowding everyone else.</p></div>
+  </div>
+  <div class="cons">
+    <div class="note rv" style="--i:1"><div class="ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><h3>Constraint: three months, everything at once</h3><p>There was no time to define, design, validate and hand off in sequence. Product definition, design and feasibility ran in parallel, so I worked with PM and engineering leads to decide what had to ship first without creating design debt that would block scaling later.</p></div>
+    
+  </div>
+</div></section>
+
+<section class="endband tz" aria-label="Next case study"><svg viewBox="0 0 1000 560" aria-hidden="true"><circle class="ring" cx="500" cy="280" r="6"/><circle class="ring" style="animation-delay:-1.2s" cx="500" cy="280" r="6"/><circle class="ring" style="animation-delay:-2.4s" cx="500" cy="280" r="6"/></svg><a class="nextcard" href="tanzu-platform.html"><span class="nx-k">End of case study · Next up, Selected Work #2</span><span class="nx-t">Launch Tanzu Data Services</span><span class="nx-d">Reframing a complex cloud platform around a clearer mental model and workflows that help technical teams.</span><span class="nx-a" aria-hidden="true">→</span></a></section>
+</main>
+<div class="lb" id="lb"><img alt=""></div>
+<footer>
+  <div class="talk"><h3>Let’s Talk!</h3><ul class="links"><li><a href="mailto:ashwinid2631@gmail.com"><span class="ico"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Iconly/Regular/Light/Message">
+<g id="Message">
+<path id="Stroke 1" d="M17.9026 8.85114L13.4593 12.4642C12.6198 13.1302 11.4387 13.1302 10.5992 12.4642L6.11841 8.85114" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Stroke 3" fill-rule="evenodd" clip-rule="evenodd" d="M16.9089 21C19.9502 21.0084 22 18.5095 22 15.4384V8.57001C22 5.49883 19.9502 3 16.9089 3H7.09114C4.04979 3 2 5.49883 2 8.57001V15.4384C2 18.5095 4.04979 21.0084 7.09114 21H16.9089Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+</svg></span>ashwinid2631@gmail.com</a></li><li><a href="tel:+12065938217"><span class="ico"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Iconly/Regular/Light/Calling">
+<g id="Calling">
+<path id="Stroke 1" d="M14.353 2.5C18.054 2.911 20.978 5.831 21.393 9.532" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Stroke 3" d="M14.353 6.04303C16.124 6.38703 17.508 7.77203 17.853 9.54303" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Stroke 5" fill-rule="evenodd" clip-rule="evenodd" d="M11.0315 12.4724C15.0205 16.4604 15.9254 11.8467 18.4653 14.3848C20.9138 16.8328 22.3222 17.3232 19.2188 20.4247C18.8302 20.737 16.3613 24.4943 7.68447 15.8197C-0.993406 7.144 2.76157 4.67244 3.07394 4.28395C6.18377 1.17385 6.66682 2.58938 9.11539 5.03733C11.6541 7.5765 7.04254 8.48441 11.0315 12.4724Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+</svg></span>206-593-8217</a></li><li><a href="https://linkedin.com/in/ashwini-design" target="_blank" rel="noopener"><span class="ico"><svg aria-hidden="true" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_17_68)">
+<path d="M44.4469 0H3.54375C1.58437 0 0 1.54688 0 3.45938V44.5312C0 46.4437 1.58437 48 3.54375 48H44.4469C46.4062 48 48 46.4438 48 44.5406V3.45938C48 1.54688 46.4062 0 44.4469 0ZM14.2406 40.9031H7.11563V17.9906H14.2406V40.9031ZM10.6781 14.8688C8.39062 14.8688 6.54375 13.0219 6.54375 10.7437C6.54375 8.46562 8.39062 6.61875 10.6781 6.61875C12.9563 6.61875 14.8031 8.46562 14.8031 10.7437C14.8031 13.0125 12.9563 14.8688 10.6781 14.8688ZM40.9031 40.9031H33.7875V29.7656C33.7875 27.1125 33.7406 23.6906 30.0844 23.6906C26.3812 23.6906 25.8187 26.5875 25.8187 29.5781V40.9031H18.7125V17.9906H25.5375V21.1219H25.6312C26.5781 19.3219 28.9031 17.4188 32.3625 17.4188C39.5719 17.4188 40.9031 22.1625 40.9031 28.3313V40.9031Z" fill="currentColor"/>
+</g>
+<defs>
+<clipPath id="clip0_17_68">
+<rect width="48" height="48" fill="white"/>
+</clipPath>
+</defs>
+</svg></span>LinkedIn</a></li></ul><span class="ml r2">LOCAL TIME</span><span class="mv r2" id="clock">—</span><span class="ml r3">LOCATION</span><span class="mv r3">OAKLAND, CA</span></div>
+  <div class="garden" id="garden"><div class="flowers" id="flowers" aria-hidden="true"></div><div class="waves" aria-hidden="true"><svg class="wa1" viewBox="0 0 2400 40" preserveAspectRatio="none"><path d="M0 20 Q75 8 150 20 T300 20 T450 20 T600 20 T750 20 T900 20 T1050 20 T1200 20 T1350 20 T1500 20 T1650 20 T1800 20 T1950 20 T2100 20 T2250 20 T2400 20 T2550 20 T2700 20 T2850 20 T3000 20 T3150 20 T3300 20 T3450 20 T3600 20 T3750 20 T3900 20 T4050 20 T4200 20 T4350 20 T4500 20 T4650 20 T4800 20 V40 H0Z"/></svg><svg class="wa2" viewBox="0 0 2400 40" preserveAspectRatio="none"><path d="M0 22 Q100 6 200 22 T400 22 T600 22 T800 22 T1000 22 T1200 22 T1400 22 T1600 22 T1800 22 T2000 22 T2200 22 T2400 22 T2600 22 T2800 22 T3000 22 T3200 22 T3400 22 T3600 22 T3800 22 T4000 22 T4200 22 T4400 22 T4600 22 T4800 22 V40 H0Z"/></svg></div><div class="panel"></div></div>
+</footer>
+<script>
+// case style variation (?cases=b to preview the seamless gradient)
+const cm=document.getElementById('work')||{dataset:{}};try{const q=new URLSearchParams(location.search).get('cases');if(q)cm.dataset.variant=q}catch(e){}
+document.querySelectorAll('.vsw button').forEach(b=>{b.onclick=()=>{cm.dataset.variant=b.dataset.v;document.querySelectorAll('.vsw button').forEach(x=>x.setAttribute('aria-pressed',x===b))}});
+// theme
+const root=document.documentElement,btns=document.querySelectorAll('.theme button');
+function setTheme(t,save){root.dataset.theme=t;btns.forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===t));if(save)try{localStorage.setItem('theme',t)}catch(e){}}
+btns.forEach(b=>b.onclick=()=>setTheme(b.dataset.t,true));setTheme(root.dataset.theme);
+// split headings into words for masked rise
+document.querySelectorAll('[data-split]').forEach(h=>{h.setAttribute('aria-label',h.textContent);h.innerHTML=h.textContent.split(' ').map((w,i)=>`<span aria-hidden="true"><i style="transition-delay:${.12+i*.09}s">${w}</i></span>`).join(' ')});
+// equalizer bars
+const bars=document.getElementById('bars');let b='';for(let i=-60;i<110;i++){const j=i+60,h=60+(j*37%90);b+=`<rect class="bar" x="${80+i*22}" y="${560-h}" width="12" height="${h}" rx="6" style="animation-delay:${-(j*53%18)/10}s;animation-duration:${1.4+(j%5)*.25}s"/>`}if(bars)bars.innerHTML=b;
+// flowers
+const fw=document.getElementById('flowers');
+const kinds=[{p:5,s:1},{p:6,s:.8},{p:5,s:1.1},{p:8,s:.85},{p:4,s:.9},{p:6,s:1},{p:5,s:.8}];
+fw.innerHTML=kinds.map((k,i)=>{let pet='';for(let n=0;n<k.p;n++){pet+=`<ellipse class="pet" cx="0" cy="-15" rx="6.5" ry="12" transform="rotate(${n*360/k.p})"/>`}
+return `<svg class="fl" viewBox="-40 -40 80 160" style="transition-delay:${i*.14}s;height:${60+k.s*40}%"><g class="sway" style="--d:${3.2+i*.45}s;--dl:${-i*.7}s"><path d="M0 120C-6 90 6 70 0 ${i%2?30:22}"/><path d="M0 95C-16 90-22 78-22 70C-8 72 0 82 0 95"/><g transform="translate(0 ${i%2?22:14})"><g class="head">${pet}</g><circle class="core" r="5"/></g></g></svg>`}).join('');
+// dropdown
+const dd=document.querySelector('.dd'),ddb=dd.querySelector('.ddb');
+const setDd=o=>{dd.classList.toggle('open',o);ddb.setAttribute('aria-expanded',o)};
+ddb.onclick=e=>{e.stopPropagation();setDd(!dd.classList.contains('open'))};
+dd.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{setDd(false);a.blur()}));
+document.addEventListener('click',e=>{if(!dd.contains(e.target))setDd(false)});
+addEventListener('keydown',e=>{if(e.key==='Escape'){setDd(false);ddb.blur()}});
+// observers
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in')}}),{threshold:.25});
+document.querySelectorAll('.case,#garden').forEach(el=>io.observe(el));
+// parallax
+const cs=[...document.querySelectorAll('.case')];let tk=false;
+function par(){tk=false;const vh=innerHeight;cs.forEach(c=>{const r=c.getBoundingClientRect();c.style.setProperty('--p',((r.top+r.height/2-vh/2)/vh).toFixed(3))})}
+addEventListener('scroll',()=>{if(!tk){tk=true;requestAnimationFrame(par)}},{passive:true});par();
+// clock (Oakland)
+const clk=document.getElementById('clock');const tick=()=>clk.textContent=new Date().toLocaleTimeString('en-US',{timeZone:'America/Los_Angeles',hour:'numeric',minute:'2-digit'}).replace(' ','\u2009');tick();setInterval(tick,15000);
+</script>
+<script>
+const rio=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');rio.unobserve(e.target)}}),{threshold:.12});
+document.querySelectorAll('.rv').forEach(el=>rio.observe(el));
+document.querySelectorAll('[data-n]').forEach(el=>{const to=+el.dataset.n;new IntersectionObserver((es,o)=>{if(es[0].isIntersecting){o.disconnect();let t0;const f=t=>{t0=t0||t;const k=Math.min(1,(t-t0)/900);el.textContent=Math.max(1,Math.round(to*(1-Math.pow(1-k,3))));if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f)}}).observe(el)});
+const lb=document.getElementById('lb'),lbi=lb.querySelector('img');
+document.querySelectorAll('.shot img').forEach(i=>i.parentElement.onclick=()=>{lbi.src=i.currentSrc||i.src;lbi.alt=i.alt;lb.classList.remove('full');lb.scrollTo(0,0);lb.classList.add('on')});
+lbi.onclick=e=>{e.stopPropagation();lb.classList.toggle('full');lb.scrollTo(0,0)};
+lb.onclick=()=>lb.classList.remove('on','full');
+addEventListener('keydown',e=>{if(e.key==='Escape')lb.classList.remove('on','full')});
+</script>
+</body>
+</html>
