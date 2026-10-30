@@ -215,6 +215,12 @@ nav a[aria-current]::after{transform:scaleX(1)!important}
 .making i{font-style:normal;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--flower)}
 .making p{margin-top:4px;font-size:15.5px;line-height:1.55}
 .mk{flex:none;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,#0070c0 12%,transparent);color:var(--flower)}
+.ab-grid{grid-template-columns:minmax(0,420px) 1fr;align-items:start}
+.ab-left{position:sticky;top:96px}
+.ab-left h1{font-size:clamp(44px,5.2vw,72px);margin:0 0 16px}
+.ab-left .tag{margin:0 0 30px}
+.ab-grid>div:last-child{padding-top:6px}
+@media(max-width:820px){.ab-left{position:static}.ab-left .photo{max-width:300px}}
 </style>
 </head>
 <body>
@@ -245,10 +251,9 @@ nav a[aria-current]::after{transform:scaleX(1)!important}
 </header>
 <main class="ab">
   <section class="ab-hero"><div class="wrap ab-grid">
-    <div class="photo rv"><img src="assets/ashwini.svg" alt="Portrait of Ashwini Dixit" width="438" height="684"></div>
+    <div class="ab-left"><h1 class="rv">A bit about Me</h1><p class="tag rv" style="--i:1">It’s not just a profession - it’s a way of thinking</p><div class="photo rv"><img src="assets/ashwini.svg" alt="Portrait of Ashwini Dixit" width="438" height="684"></div></div>
     <div>
-      <h1 class="rv">A bit about Me</h1>
-      <p class="tag rv" style="--i:1">It’s not just a profession - it’s a way of thinking</p>
+      
       <p class="lead rv" style="--i:2">As an experienced designer, my work is my lifestyle. I am constantly observing the world, how people interact with technology, objects and space!</p>
       <p class="lead rv" style="--i:3">I value clarity, functionality and purpose : both in design &amp; in life. I believe the best design solutions come from curiosity, collaboration and out-of-the-box thinking.</p>
       <p class="lead rv" style="--i:4">My design philosophy has always been focused on problem solving with uncompromising craft. I've been very lucky to be able to work across multiple verticals in a close collaboration with partners — from consumer e-commerce to fraud management to cloud infra.</p>
